@@ -276,7 +276,7 @@ export function registerBacklinksTools(server: McpServer, apiClient: DataForSeoC
   registerTool(
     server,
     "backlinks_index",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/backlinks/index");
       
@@ -288,7 +288,7 @@ export function registerBacklinksTools(server: McpServer, apiClient: DataForSeoC
   registerTool(
     server,
     "backlinks_errors",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/backlinks/errors");
       

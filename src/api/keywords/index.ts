@@ -84,7 +84,7 @@ export function registerKeywordsTools(server: McpServer, apiClient: DataForSeoCl
   registerTool(
     server,
     "keywords_google_ads_languages",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/keywords_data/google_ads/languages");
       
@@ -96,7 +96,7 @@ export function registerKeywordsTools(server: McpServer, apiClient: DataForSeoCl
   registerTool(
     server,
     "keywords_google_ads_categories",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/keywords_data/google_ads/categories");
       

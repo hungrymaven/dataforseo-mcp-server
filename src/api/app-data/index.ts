@@ -97,7 +97,7 @@ export function registerAppDataTools(server: McpServer, apiClient: DataForSeoCli
   registerTool(
     server,
     "app_data_google_play_languages",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/app_data/google_play/languages");
       
@@ -197,7 +197,7 @@ export function registerAppDataTools(server: McpServer, apiClient: DataForSeoCli
   registerTool(
     server,
     "app_data_app_store_languages",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/app_data/apple/languages");
       

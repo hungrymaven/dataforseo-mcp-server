@@ -70,7 +70,7 @@ export function registerBusinessDataTools(server: McpServer, apiClient: DataForS
   registerTool(
     server,
     "business_data_google_languages",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/business_data/google/languages");
       

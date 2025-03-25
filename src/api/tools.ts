@@ -1,61 +1,47 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { DataForSeoClient } from "./client.js";
+import { DataForSeoResponse, TaskReadyResponse, TaskGetResponse } from "./types.js";
+
+interface RequestHandlerExtra {
+  args: any;
+  client: DataForSeoClient;
+}
 
 /**
  * Base helper function to register an MCP tool for DataForSEO API
  */
-export function registerTool<T extends z.ZodRawShape>(
+export function registerTool(
   server: McpServer,
   name: string,
-  schema: T,
-  handler: (params: z.infer<z.ZodObject<T>>, client: DataForSeoClient) => Promise<any>
+  schema: z.ZodObject<any> | z.ZodEffects<any>,
+  handler: (params: z.infer<typeof schema>, client: DataForSeoClient) => Promise<any>
 ) {
   server.tool(
     name,
-    schema,
-    async (params, _context) => {
-      try {
-        // We get the apiClient from the closure, not from context
-        const result = await handler(params as z.infer<z.ZodObject<T>>, _context.client as unknown as DataForSeoClient);
-        
-        return {
+    'shape' in schema ? schema.shape : schema,
+    (args: any, extra: RequestHandlerExtra) => {
+      return handler(args, extra.client)
+        .then(result => ({
           content: [
             {
               type: "text",
               text: JSON.stringify(result, null, 2)
             }
           ]
-        };
-      } catch (error) {
-        console.error(`Error in ${name} tool:`, error);
-        
-        if (error instanceof Error) {
+        }))
+        .catch(error => {
+          console.error(`Error in ${name} tool:`, error);
           return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({
-                  error: error.message,
-                  stack: error.stack
-                }, null, 2)
-              }
-            ]
-          };
-        }
-        
-        return {
-          content: [
-            {
+            content: [{
               type: "text",
               text: JSON.stringify({
-                error: "Unknown error occurred",
-                details: error
+                error: error instanceof Error ? error.message : "Unknown error occurred",
+                stack: error instanceof Error ? error.stack : undefined
               }, null, 2)
-            }
-          ]
-        };
-      }
+            }]
+          };
+        });
     }
   );
 }
@@ -63,35 +49,35 @@ export function registerTool<T extends z.ZodRawShape>(
 /**
  * Helper for registering a task-based tool (POST, READY, GET pattern)
  */
-export function registerTaskTool<PostT extends z.ZodRawShape>(
+export function registerTaskTool(
   server: McpServer,
-  baseName: string,
-  postSchema: PostT,
-  postHandler: (params: z.infer<z.ZodObject<PostT>>, client: DataForSeoClient) => Promise<any>,
-  readyHandler: (client: DataForSeoClient) => Promise<any>,
-  getHandler: (id: string, client: DataForSeoClient) => Promise<any>
+  name: string,
+  postSchema: z.ZodObject<any>,
+  getSchema: z.ZodObject<any>,
+  postHandler: (params: any, client: DataForSeoClient) => Promise<any>
 ) {
-  // Register POST tool
+  // Register POST endpoint
+  registerTool(server, `${name}_post`, postSchema, postHandler);
+  
+  // Register READY endpoint
   registerTool(
     server,
-    `${baseName}_post`,
-    postSchema,
-    postHandler
+    `${name}_ready`,
+    z.object({}),
+    async (_params, client) => {
+      const response = await client.get(`/serp/google/organic/tasks_ready`) as DataForSeoResponse<TaskReadyResponse>;
+      return response;
+    }
   );
   
-  // Register READY tool
+  // Register GET endpoint
   registerTool(
     server,
-    `${baseName}_ready`,
-    {},
-    (_params, client) => readyHandler(client)
-  );
-  
-  // Register GET tool
-  registerTool(
-    server,
-    `${baseName}_get`,
-    { id: z.string() },
-    (params, client) => getHandler(params.id, client)
+    `${name}_get`,
+    getSchema,
+    async (params, client) => {
+      const response = await client.get(`/serp/google/organic/task_get/${params.id}`) as DataForSeoResponse<TaskGetResponse<any>>;
+      return response;
+    }
   );
 }

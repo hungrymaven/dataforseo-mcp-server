@@ -20,7 +20,8 @@ const googleOrganicLiveSchema = z.object({
   se_domain: z.string().optional().describe("Search engine domain (e.g., google.com)")
 });
 
-const googleOrganicTaskSchema = googleOrganicLiveSchema.extend({
+const googleOrganicTaskSchema = z.object({
+  ...googleOrganicLiveSchema.shape,
   priority: z.number().min(1).max(2).optional().describe("Task priority: 1 (normal) or 2 (high)"),
   tag: z.string().optional().describe("Custom identifier for the task"),
   postback_url: z.string().optional().describe("URL to receive a callback when the task is completed"),
@@ -68,26 +69,12 @@ export function registerSerpTools(server: McpServer, apiClient: DataForSeoClient
     server,
     "serp_google_organic_task",
     googleOrganicTaskSchema,
-    async (params, client) => {
+    z.object({ id: z.string() }),
+    async (params: z.infer<typeof googleOrganicTaskSchema>, client: DataForSeoClient) => {
       const response = await client.post<DataForSeoResponse<TaskPostResponse>>(
         "/serp/google/organic/task_post",
         [params]
       );
-      
-      return response;
-    },
-    async (client) => {
-      const response = await client.get<DataForSeoResponse<TaskReadyResponse>>(
-        "/serp/google/organic/tasks_ready"
-      );
-      
-      return response;
-    },
-    async (id, client) => {
-      const response = await client.get<DataForSeoResponse<TaskGetResponse<GoogleOrganicTaskResult>>>(
-        `/serp/google/organic/task_get/${id}`
-      );
-      
       return response;
     }
   );
@@ -232,10 +219,10 @@ export function registerSerpTools(server: McpServer, apiClient: DataForSeoClient
   // SERP API Locations
   registerTool(
     server,
-    "serp_google_locations",
-    {
+    "serp_locations",
+    z.object({
       country: z.string().optional().describe("Filter locations by country name")
-    },
+    }),
     async (params, client) => {
       const url = params.country 
         ? `/serp/google/locations?country=${encodeURIComponent(params.country)}`
@@ -251,7 +238,7 @@ export function registerSerpTools(server: McpServer, apiClient: DataForSeoClient
   registerTool(
     server,
     "serp_google_languages",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/serp/google/languages");
       

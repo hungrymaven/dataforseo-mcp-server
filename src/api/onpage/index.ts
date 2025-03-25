@@ -30,7 +30,7 @@ export function registerOnPageTools(server: McpServer, apiClient: DataForSeoClie
   registerTool(
     server,
     "onpage_tasks_ready",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/on_page/tasks_ready");
       

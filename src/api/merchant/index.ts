@@ -137,7 +137,7 @@ export function registerMerchantTools(server: McpServer, apiClient: DataForSeoCl
   registerTool(
     server,
     "merchant_google_languages",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/merchant/google/languages");
       
@@ -235,7 +235,7 @@ export function registerMerchantTools(server: McpServer, apiClient: DataForSeoCl
   registerTool(
     server,
     "merchant_amazon_languages",
-    {},
+    z.object({}),
     async (_params, client) => {
       const response = await client.get<DataForSeoResponse<any>>("/merchant/amazon/languages");
       
